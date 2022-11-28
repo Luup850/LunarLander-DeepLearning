@@ -34,29 +34,43 @@ FPS = 50
 SCALE = 30.0  # affects how fast-paced the game is, forces should be adjusted as well
 
 MAIN_ENGINE_POWER = 13.0
-SIDE_ENGINE_POWER = 1.5
+SIDE_ENGINE_POWER = 0.6
 
-INITIAL_RANDOM = 1500.0  # Set 1500 to make game harder
+INITIAL_RANDOM = 1000.0  # Set 1500 to make game harder
 
-#Default 
+LANDER_POLY = [(-14, +17), (-17, 0), (-17, -10), (+17, -10), (+17, 0), (+14, +17)]
+LEG_AWAY = 20
+LEG_DOWN = 18
+LEG_W, LEG_H = 4, 8
+LEG_SPRING_TORQUE = 40
+
+SIDE_ENGINE_HEIGHT = 14.0
+SIDE_ENGINE_AWAY = 12.0
+
+# MAIN_ENGINE_POWER = 50
+# SIDE_ENGINE_POWER = 5
+
+# INITIAL_RANDOM = 1500.0  # Set 1500 to make game harder
+
+# #Default 
 # LANDER_POLY = [(-14, +17), (-17, 0), (-17, -10), (+17, -10), (+17, 0), (+14, +17)]
 
 # Rocket
-LANDER_POLY = [(-2, 80), (-12, 50), (-12, 40), (-10, 40), (-5, 0), (5, 0), (10, 40), (12, 40), (12, 50), (2, 80)]
+# LANDER_POLY = [(-2, 80), (-12, 50), (-12, 40), (-10, 40), (-5, 0), (5, 0), (10, 40), (12, 40), (12, 50), (2, 80)]
 
 # Ugly
 # LANDER_POLY = [(0, 80), (-4, 64), (-8, 44), (-8, 36), (-16, 20), (-20,12), (-4, 8), (-4, 0), (4, 0), (4, 8), (20, 12), (16, 20), (8, 36), (8, 44), (4, 64)]
 
-LEG_AWAY = 18
-LEG_DOWN = 0
-LEG_W, LEG_H = 5,15
-LEG_SPRING_TORQUE = 40
+# LEG_AWAY = 23
+# LEG_DOWN = 20
+# LEG_W, LEG_H = 2, 8
+# LEG_SPRING_TORQUE = 40
 
-SIDE_ENGINE_HEIGHT = 65.0
-SIDE_ENGINE_AWAY = 10.0
+# SIDE_ENGINE_HEIGHT = 60.0
+# SIDE_ENGINE_AWAY = 10.0
 
 VIEWPORT_W = 1280
-VIEWPORT_H = 720
+VIEWPORT_H = 900
 
 
 class ContactDetector(contactListener):
@@ -205,7 +219,7 @@ class LunarLander(gym.Env, EzPickle):
         wind_power: float = 15.0,
         turbulence_power: float = 1.5,
         color_scheme = 'moon',
-        fuel_penalty = 0.3,
+        fuel_penalty = 0.1,
     ):
         EzPickle.__init__(
             self,
@@ -342,7 +356,7 @@ class LunarLander(gym.Env, EzPickle):
         chunk_x = [W / (CHUNKS - 1) * i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS // 2 - 1]
         self.helipad_x2 = chunk_x[CHUNKS // 2 + 1]
-        self.helipad_y = H / 4
+        self.helipad_y = H / 6
         height[CHUNKS // 2 - 2] = self.helipad_y
         height[CHUNKS // 2 - 1] = self.helipad_y
         height[CHUNKS // 2 + 0] = self.helipad_y
@@ -370,7 +384,7 @@ class LunarLander(gym.Env, EzPickle):
         initial_y = VIEWPORT_H / SCALE
         self.lander: Box2D.b2Body = self.world.CreateDynamicBody(
             position=(VIEWPORT_W / SCALE / 2, initial_y),
-            angle=0.0,
+            angle= 0.0,
             fixtures=fixtureDef(
                 shape=polygonShape(
                     vertices=[(x / SCALE, y / SCALE) for x, y in LANDER_POLY]
@@ -589,7 +603,7 @@ class LunarLander(gym.Env, EzPickle):
 
         reward = 0
         shaping = (
-            -100 * np.sqrt(state[0] * state[0] + state[1] * state[1])
+            -100 * np.sqrt(state[0]**2 + state[1]**2)
             - 100 * np.sqrt(state[2] * state[2] + state[3] * state[3])
             - 100 * abs(state[4])
             + 10 * state[6]
@@ -608,10 +622,10 @@ class LunarLander(gym.Env, EzPickle):
         terminated = False
         if self.game_over or abs(state[0]) >= 1.0:
             terminated = True
-            reward = -100
+            reward = -150
         if not self.lander.awake:
             terminated = True
-            reward = +100
+            reward = +150
 
         if self.render_mode == "human":
             self.render()
